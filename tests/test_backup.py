@@ -2,33 +2,25 @@
 """
 Test the "backup" function, which saves sheet data to file.
 """
+
+import logging
+import os
+import time
+
 import sheetsync
-import time, os
 
-CLIENT_ID = os.environ['SHEETSYNC_CLIENT_ID']  
-CLIENT_SECRET = os.environ['SHEETSYNC_CLIENT_SECRET']
-
-TESTS_FOLDER_KEY = os.environ.get("SHEETSYNC_FOLDER_KEY")
-SHEET_TO_BE_BACKED_UP = "1-HpLBDvGS5V8pIXR9GSqseeciWyy41I1uyLhzyAjPq4"
-
-def test_backup():
-    print ('setup_function: Retrieve OAuth2.0 credentials.')
-    creds = sheetsync.ia_credentials_helper(CLIENT_ID, CLIENT_SECRET, 
-                    credentials_cache_file='credentials.json',
-                    cache_key='default')
+import pytest
 
 
-    print ('Open a spreadsheet, back it up to named file.')
-    target = sheetsync.Sheet(credentials=creds,
-                             document_key = SHEET_TO_BE_BACKED_UP,
-                             worksheet_name = 'Simpsons',
-                             key_column_headers = ['Character'],
-                             header_row_ix=1)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler)
+logging.basicConfig()
 
+def test_backup(simpsons_sheet, credentials):
     backup_name = 'backup test: %s' % int(time.time())
-    backup_key = target.backup(backup_name, folder_name="sheetsync backups")
+    backup_key = simpsons_sheet.backup(backup_name, folder_name="sheetsync backups")
 
-    backup_sheet = sheetsync.Sheet(credentials=creds,
+    backup_sheet = sheetsync.Sheet(credentials=credentials,
                                    document_key = backup_key,
                                    worksheet_name = 'Simpsons',
                                    key_column_headers = ['Character'],
@@ -38,5 +30,6 @@ def test_backup():
     assert "Bart Simpson" in backup_data
     assert backup_data["Bart Simpson"]["Voice actor"] == "Nancy Cartwright"
 
-    print ('teardown_function Delete test spreadsheet')
+    logger.debug('Deleting backup spreadsheet: {}'.format(backup_sheet.document_name))
     backup_sheet.drive_service.files().delete(fileId=backup_sheet.document_key).execute()
+    logger.debug('Deleted backup spreadsheet: {}'.format(backup_sheet.document_name))

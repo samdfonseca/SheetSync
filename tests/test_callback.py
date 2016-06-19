@@ -2,8 +2,19 @@
 """
 Test the support for a row_change callback function.
 """
+
+import logging
+import os
+import time
+
 import sheetsync
-import time, os
+
+import pytest
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler)
+logging.basicConfig()
 
 # TODO: Use this: http://stackoverflow.com/questions/22574109/running-tests-with-api-authentication-in-travis-ci-without-exposing-api-password
 
@@ -20,7 +31,7 @@ target = None
 TODO: write this test!
 def setup_function(function):
     global target
-    print ('setup_function: Create test spreadsheet.')
+    print('setup_function: Create test spreadsheet.')
     # Copy the template spreadsheet into the prescribed folder.
     new_doc_name = '%s %s' % (__name__, int(time.time()))
     target = sheetsync.Sheet(GOOGLE_U,
@@ -35,12 +46,12 @@ def setup_function(function):
 
 
 def teardown_function(function):
-    print ('teardown_function Delete test spreadsheet')
+    print('teardown_function Delete test spreadsheet')
     gdc = target._doc_client_pool[GOOGLE_U]
     target_rsrc = gdc.get_resource_by_id(target.document_key)
     gdc.Delete(target_rsrc)
 
 def test_row_change_callback():
-    print ('Update/Insert into a sheet and check row_change behavior')
+    print('Update/Insert into a sheet and check row_change behavior')
     assert False
 """

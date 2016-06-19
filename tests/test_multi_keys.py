@@ -9,21 +9,23 @@ strings. For instance:
     - Not specifying the key_column_headers
 """
 
+import logging
+import os
+import time
+
 import sheetsync
-import time, os
 
-CLIENT_ID = os.environ['SHEETSYNC_CLIENT_ID']  
-CLIENT_SECRET = os.environ['SHEETSYNC_CLIENT_SECRET']
+import pytest
 
-TEMPLATE_DOC = "0AsrRHMfAlOZrdFlLLWlzM2dhZ0tyS1k5RUxmVGU3cEE"
-TESTS_FOLDER_KEY = os.environ.get("SHEETSYNC_FOLDER_KEY")
 
-target = None
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler)
+logging.basicConfig()
 
 """
 def setup_function(function):
     global target
-    print ('setup_function: Create test spreadsheet.')
+    print('setup_function: Create test spreadsheet.')
     # Copy the template spreadsheet into the prescribed folder.
     target = sheetsync.Sheet(GOOGLE_U,
                              GOOGLE_P,
@@ -37,24 +39,24 @@ def setup_function(function):
 
 
 def teardown_function(function):
-    print ('teardown_function Delete test spreadsheet')
+    print('teardown_function Delete test spreadsheet')
     gdc = target._doc_client_pool[GOOGLE_U]
     target_rsrc = gdc.get_resource_by_id(target.document_key)
     gdc.Delete(target_rsrc)
 
 def test_date_keys():
-    print ('TODO: Test dates as keys.')
+    print('TODO: Test dates as keys.')
     assert True
 
 def test_tuple_keys():
-    print ('TODO: Test dates as keys.')
+    print('TODO: Test dates as keys.')
     assert True
 
 def test_integers_keys():
-    print ('TODO: Test dates as keys.')
+    print('TODO: Test dates as keys.')
     assert True
 
 def test_tuple_mix_keys():
-    print ('TODO: Test dates as keys.')
+    print('TODO: Test dates as keys.')
     assert True
 """

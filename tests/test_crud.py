@@ -2,26 +2,21 @@
 """
 CRUD tests for row maniupulation.
 """
+
+import logging
+import os
+import time
+
 import sheetsync
-import time, os
 
-# TODO: Use this: http://stackoverflow.com/questions/22574109/running-tests-with-api-authentication-in-travis-ci-without-exposing-api-password
+import pytest
 
-# TODO: Remove the need for the tests_folder key by automatically creating the
-#       folder
 
-CLIENT_ID = os.environ['SHEETSYNC_CLIENT_ID']  
-CLIENT_SECRET = os.environ['SHEETSYNC_CLIENT_SECRET']
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler)
+logging.basicConfig()
 
-# Optional folder_key that all spreadsheets, and folders, will be created in.
-TESTS_FOLDER = os.environ.get("SHEETSYNC_FOLDER_KEY")
-
-# Template hosted by a dedicated "sheetsync" account that Mark set up.
-# This contains half the 03/04 Arsenal squad. We will add to it, delete from it
-# and more.
-TEMPLATE_DOC = "1-jjFDO11zLo6i6vpL7LbdhNMUJTAnjYVhUT7ZHMMtKQ"
-
-target = None
+# ARSENAL_0304 = {'14': {'Apps': '39', 'Goals': '39', 'Name': 'Thierry Henry', 'Nat.': 'FRA', 'Pos.': 'DF'}}
 
 ARSENAL_0304 = {'1': {'Apps': '54',
        'Goals': '0',
@@ -75,7 +70,7 @@ ARSENAL_0304 = {'1': {'Apps': '54',
         'Pos.': 'MF'},
  '22': {'Apps': '22',
         'Goals': '0',
-        'Name': u'Ga\xebl Clichy',
+        'Name': 'Ga\xebl Clichy',
         'Nat.': ' FRA',
         'Pos.': 'DF'},
  '23': {'Apps': '50',
@@ -95,7 +90,7 @@ ARSENAL_0304 = {'1': {'Apps': '54',
         'Pos.': 'DF'},
  '28': {'Apps': '55',
         'Goals': '3',
-        'Name': u'Kolo Tour\xe9',
+        'Name': 'Kolo Tour\xe9',
         'Nat.': ' CIV',
         'Pos.': 'DF'},
  '3': {'Apps': '47',
@@ -105,7 +100,7 @@ ARSENAL_0304 = {'1': {'Apps': '54',
        'Pos.': 'DF'},
  '30': {'Apps': '15',
         'Goals': '4',
-        'Name': u'J\xe9r\xe9mie Aliadi\xe8re',
+        'Name': 'J\xe9r\xe9mie Aliadi\xe8re',
         'Nat.': ' FRA',
         'Pos.': 'FW'},
  '32': {'Apps': '1',
@@ -160,7 +155,7 @@ ARSENAL_0304 = {'1': {'Apps': '54',
         'Pos.': 'FW'},
  '55': {'Apps': '1',
         'Goals': '0',
-        'Name': u'\xd3lafur Ingi Sk\xfalason',
+        'Name': '\xd3lafur Ingi Sk\xfalason',
         'Nat.': ' ISL',
         'Pos.': 'MF'},
  '56': {'Apps': '3',
@@ -170,12 +165,12 @@ ARSENAL_0304 = {'1': {'Apps': '54',
         'Pos.': 'FW'},
  '57': {'Apps': '3',
         'Goals': '1',
-        'Name': u'Cesc F\xe0bregas',
+        'Name': 'Cesc F\xe0bregas',
         'Nat.': ' ESP',
         'Pos.': 'MF'},
  '7': {'Apps': '51',
        'Goals': '19',
-       'Name': u'Robert Pir\xe8s',
+       'Name': 'Robert Pir\xe8s',
        'Nat.': ' FRA',
        'Pos.': 'MF'},
  '8': {'Apps': '44',
@@ -185,46 +180,13 @@ ARSENAL_0304 = {'1': {'Apps': '54',
        'Pos.': 'MF'},
  '9': {'Apps': '21',
        'Goals': '5',
-       'Name': u'Jos\xe9 Antonio Reyes',
+       'Name': 'Jos\xe9 Antonio Reyes',
        'Nat.': ' FRA',
        'Pos.': 'FW'}}
 
-def setup_function(function):
-    global target
-    print ('setup_function: Retrieve OAuth2.0 credentials.')
-    creds = sheetsync.ia_credentials_helper(CLIENT_ID, CLIENT_SECRET, 
-                    credentials_cache_file='credentials.json',
-                    cache_key='default')
-
-
-    print ('setup_function: Create test spreadsheet.')
-    # Copy the template spreadsheet into the prescribed folder.
-    new_doc_name = '%s %s' % (__name__, int(time.time()))
-    target = sheetsync.Sheet(creds,
-                             document_name = new_doc_name,
-                             worksheet_name = "Arsenal",
-                             folder_key = TESTS_FOLDER,
-                             template_key = TEMPLATE_DOC,
-                             key_column_headers = ["No."],
-                             header_row_ix=2,
-                             formula_ref_row_ix=1)
-
-
-def teardown_function(function):
-    print ('teardown_function Delete test spreadsheet')
-    target.drive_service.files().delete(fileId=target.document_key).execute()
-
-def test_insert_row():
-    print ('Add enough rows to spreadsheet that it needs extending')
-    target.sync(ARSENAL_0304)
-    # Now get the data and check certain rows were added.
-    raw_data = target.data()
-    assert '57' in raw_data
-    assert '10' in raw_data
-    assert 'Goals per 100 apps' in raw_data['57']
-
-def test_soft_delete():
-    print ('Soft delete rows from the spreadsheet')
+def test_soft_delete(new_from_arsenal_template):
+    target = new_from_arsenal_template
+    print('Soft delete rows from the spreadsheet')
     raw_data = target.data()
     # Delete Giovanni
     assert "16" in raw_data
@@ -236,8 +198,9 @@ def test_soft_delete():
     assert "16" not in new_raw_data
     assert "16 (DELETED)" in new_raw_data
  
-def test_full_delete():
-    print ('Test hard deletes of rows from the spreadsheet.')
+def test_full_delete(new_from_arsenal_template):
+    target = new_from_arsenal_template
+    print('Test hard deletes of rows from the spreadsheet.')
     raw_data = target.data()
     target.flag_delete_mode = False
     # Turn on full deletion.
@@ -250,8 +213,9 @@ def test_full_delete():
     assert "16" not in new_raw_data
     assert "16 (DELETED)" not in new_raw_data
 
-def test_change_row():
-    print ('Test changing multiple rows.')
+def test_change_row(new_from_arsenal_template):
+    target = new_from_arsenal_template
+    print('Test changing multiple rows.')
     correct_data = {}
     correct_data.update(ARSENAL_0304)
     correct_data["14"]["Apps"] = 51
@@ -263,20 +227,22 @@ def test_change_row():
     assert new_raw_data["14"]["Pos."] == "FW"
     assert new_raw_data["9"]["Nat."] == "ENG"
 
-def test_extend_header():
-    print ('Add additional columns, include expanding the spreadsheet.')
+def test_extend_header(new_from_arsenal_template):
+    target = new_from_arsenal_template
+    print('Add additional columns, include expanding the spreadsheet.')
     full_data = {}
     full_data.update(ARSENAL_0304)
     # Add a column.
-    for row in full_data.itervalues():
+    for row in list(full_data.values()):
         row["Club"] = "Arsenal"
     target.sync(full_data)
     new_raw_data = target.data()
     assert "Club" in target.header
     assert new_raw_data["1"]["Club"] == "Arsenal"
 
-def test_inject_only():
-    print ('Test injecting partial rows, check no deleting.')
+def test_inject_only(new_from_arsenal_template):
+    target = new_from_arsenal_template
+    print('Test injecting partial rows, check no deleting.')
     extra_players = { "57" : {}, "32" : {} }
     extra_players["57"].update( ARSENAL_0304["57"] )
     extra_players["32"].update( ARSENAL_0304["32"] )
@@ -286,5 +252,5 @@ def test_inject_only():
     assert "19" in new_raw_data
     assert "57" in new_raw_data
     assert "32" in new_raw_data
-    assert new_raw_data["57"]["Name"] == u'Cesc F\xe0bregas'
+    assert new_raw_data["57"]["Name"] == 'Cesc F\xe0bregas'
 

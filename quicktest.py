@@ -1,3 +1,4 @@
+from __future__ import unicode_literals, absolute_import, print_function
 import logging, os
 
 from sheetsync import Sheet, ia_credentials_helper
@@ -20,4 +21,4 @@ target = Sheet(credentials=creds, document_name="sheetsync quicktest")
 
 target.inject(data)
 
-print "Spreadsheet created here: %s" % target.document_href
+print("Spreadsheet created here: {}".format(target.document_href))

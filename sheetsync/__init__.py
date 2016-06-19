@@ -13,12 +13,12 @@
     :license: MIT, see LICENSE.txt for more details.
 """
 
-from version import __version__
+from .version import __version__
 
 import logging
 import httplib2 # pip install httplib2
 from datetime import datetime
-import json
+import simplejson as json
 
 # import latest google api python client.
 import apiclient.errors # pip install --upgrade google-api-python-client
@@ -72,11 +72,11 @@ def ia_credentials_helper(client_id, client_secret,
         try:
             with open(credentials_cache_file, 'rb') as inf:
                 cache = json.load(inf)
-        except (IOError, ValueError), e:
+        except (IOError, ValueError) as e:
             pass
         cache[key] = credentials.to_json()
         with open(credentials_cache_file, 'wb') as ouf:
-            json.dump(cache, ouf)
+            json.dumps(str(cache), ouf)
 
     credentials_key = "%s/%s/%s" % (client_id, client_secret, cache_key)
     try:
@@ -87,7 +87,7 @@ def ia_credentials_helper(client_id, client_secret,
     except (IOError, 
             ValueError, 
             KeyError, 
-            AccessTokenRefreshError), e:
+            AccessTokenRefreshError) as e:
         # Check https://developers.google.com/drive/scopes for all available scopes
         OAUTH_SCOPE = ('https://www.googleapis.com/auth/drive '+
                        'https://spreadsheets.google.com/feeds')
@@ -99,7 +99,7 @@ def ia_credentials_helper(client_id, client_secret,
                                    redirect_uri=REDIRECT_URI)
         authorize_url = flow.step1_get_authorize_url()
         print('Go to the following link in your browser:\n' + authorize_url)
-        code = raw_input('Enter verification code: ').strip()
+        code = input('Enter verification code: ').strip()
         credentials = flow.step2_exchange(code)
 
     _save_credentials(credentials_key, credentials)
@@ -200,11 +200,11 @@ class Row(dict):
         self.db[key] = cell.value
 
     def cell_list(self):
-        for cell in self.itervalues():
+        for cell in self.values():
             yield cell
 
     def is_empty(self):
-        return all((val is None or val == '') for val in self.db.itervalues())
+        return all((val is None or val == '') for val in self.db.values())
 
 class Header(object):
     def __init__(self):
@@ -232,7 +232,7 @@ class Header(object):
 
     @property
     def headers_in_order(self):
-        col_header_list = self.col_to_header.items()
+        col_header_list = list(self.col_to_header.items())
         col_header_list.sort(lambda x,y: cmp(x[0],y[0]))
         return [header for col,header in col_header_list]
 
@@ -250,7 +250,7 @@ class Header(object):
 
     @property
     def columns(self):
-        return self.col_to_header.keys()
+        return list(self.col_to_header.keys())
 
     def __contains__(self, header):
         return (header in self.header_to_col)
@@ -435,7 +435,7 @@ class Sheet(object):
                 logger.info("Not found. Creating worksheet '%s'", self.worksheet_name)
                 self._worksheet = self.sheet.add_worksheet(title=self.worksheet_name, 
                                                            rows=20, cols=10)
-        except Exception, e:
+        except Exception as e:
             logger.exception("Failed to find or create worksheet: %s. %s", 
                                                       self.worksheet_name, e)
             raise e
@@ -485,10 +485,10 @@ class Sheet(object):
         if source_doc is not None:
             logger.info("Copying spreadsheet.")
             try:
-                print body
-                print source_doc['id']
+                print(body)
+                print(source_doc['id'])
                 new_document = drive_service.files().copy(fileId=source_doc['id'], body=body).execute()
-            except Exception, e:
+            except Exception as e:
                 logger.exception("gdata API error. %s", e)
                 raise e
 
@@ -498,7 +498,7 @@ class Sheet(object):
             body['mimeType'] = 'application/vnd.google-apps.spreadsheet'
             try:
                 new_document = drive_service.files().insert(body=body).execute()
-            except Exception, e:
+            except Exception as e:
                 logger.exception("gdata API error. %s", e)
                 raise e
 
@@ -514,7 +514,7 @@ class Sheet(object):
         if folder_key is not None:
             try:
                 folder_rsrc = drive_service.files().get(fileId=folder_key).execute()
-            except apiclient.errors.HttpError, e:
+            except apiclient.errors.HttpError as e:
                 # XXX: WRONG... probably returns 404 if not found,.. which is not an error.
                 logger.exception("Google API error: %s", e)
                 raise e
@@ -538,7 +538,7 @@ class Sheet(object):
                 return items[0]
             elif len(items) > 1:
                 raise KeyError("%s folders found named: %s" % (len(items), folder_name))
-        except Exception, e:
+        except Exception as e:
             logger.exception("Google API error. %s", e)
             raise e
 
@@ -547,7 +547,7 @@ class Sheet(object):
             new_folder_rsrc = drive_service.files().insert(
                 body={ 'mimeType' : 'application/vnd.google-apps.folder',
                        'title' : folder_name }).execute()
-        except Exception, e:
+        except Exception as e:
             logger.exception("Google API error. %s", e)
             raise e
 
@@ -562,7 +562,7 @@ class Sheet(object):
             logger.debug("Finding document by key.")
             try:
                 doc_rsrc = drive_service.files().get(fileId=doc_key).execute()
-            except Exception, e:
+            except Exception as e:
                 logger.exception("gdata API error. %s", e)
                 raise e
 
@@ -580,7 +580,7 @@ class Sheet(object):
                         doc_name.replace("'","\\'")
                         ).execute()
             matches = name_query['items']
-        except Exception, e:
+        except Exception as e:
             logger.exception("gdata API error. %s", e)
             raise e
 
@@ -606,7 +606,7 @@ class Sheet(object):
         if new_rows or new_cols:
             try:
                 self.worksheet.resize(rows=new_rows, cols=new_cols)
-            except Exception, e:
+            except Exception as e:
                 logger.exception("Error resizing worksheet. %s", e)
                 raise e
 
@@ -632,7 +632,7 @@ class Sheet(object):
                                         len(self._batch_request))
             try:
                 self.worksheet.update_cells(self._batch_request)
-            except Exception, e:
+            except Exception as e:
                 logger.exception("gdata API error. %s", e)
                 raise e
 
@@ -681,7 +681,7 @@ class Sheet(object):
             # Bit of a hack to rip out Gspread's xml parsing.
             cfeed = [gspread.Cell(self, elem) for elem in
                                         feed.findall(gspread.client._ns('entry'))]
-        except Exception, e:
+        except Exception as e:
             logger.exception("gspread error. %s", e)
             raise e
 
@@ -757,7 +757,7 @@ class Sheet(object):
         drive_service = self.drive_service
         try:
             source_rsrc = drive_service.files().get(fileId=self.document_key).execute()
-        except Exception, e:
+        except Exception as e:
             logger.exception("Google API error. %s", e)
             raise e
 
@@ -801,7 +801,7 @@ class Sheet(object):
         
         """
         sheet_data = {}
-        self.max_row = max(self.header_row_ix, self.formula_ref_row_ix)
+        self.max_row = max(self.header_row_ix or 0, self.formula_ref_row_ix or 0)
         all_cells = self._cell_feed(row=self.max_row+1,
                                     further_rows=True,
                                     col=self.header.first_column,
@@ -812,13 +812,13 @@ class Sheet(object):
             if wks_row.row_num not in sheet_data and not wks_row.is_empty():
                 sheet_data[wks_row.row_num] = wks_row
 
-        all_rows = sheet_data.keys()
+        all_rows = list(sheet_data.keys())
         if all_rows:
             self.max_row = max(all_rows)
 
         # Now index by key_tuple
         indexed_sheet_data = {}
-        for row, wks_row in sheet_data.iteritems():
+        for row, wks_row in sheet_data.items():
             # Make the key tuple
             if len(self.key_column_headers) == 0:
                 # Are there any default key column headers?
@@ -826,7 +826,7 @@ class Sheet(object):
                     logger.info("Assumed key column's header is 'Key'")
                     self.key_column_headers = ['Key']
                 elif "Key-1" in wks_row:
-                    self.key_column_headers = [h for h in wks_row.keys() 
+                    self.key_column_headers = [h for h in list(wks_row.keys()) 
                         if h.startswith("Key-") and h.split("-")[1].isdigit()]
                     logger.info("Assumed key column headers were: %s",
                                 self.key_column_headers)
@@ -908,7 +908,7 @@ class Sheet(object):
         logger.debug("In _update. Checking for bad keys and missing headers")
         fixed_data = {}
         missing_raw_keys = set()
-        for key, row_data in raw_data.iteritems():
+        for key, row_data in raw_data.items():
             if not isinstance(key, tuple):
                 key = (str(key),)
             else:
@@ -922,7 +922,7 @@ class Sheet(object):
                     self.key_column_headers = ["Key-%s" % i for i in range(1,len(key)+1)]
 
             # Cast row_data values to unicode strings.
-            fixed_data[key] = dict([(k,unicode(v)) for (k,v) in row_data.items()])
+            fixed_data[key] = dict([(k,str(v)) for (k,v) in list(row_data.items())])
 
             missing_raw_keys.add(key)
             if len(key) != self.key_length:
@@ -935,12 +935,12 @@ class Sheet(object):
         results = UpdateResults()
 
         # Check for changes and deletes.
-        for key_tuple, wks_row in self.data(as_cells=True).iteritems():
+        for key_tuple, wks_row in self.data(as_cells=True).items():
             if key_tuple in fixed_data:
                 # This worksheet row is in the fixed_data, might be a change or no-change.
                 raw_row = fixed_data[key_tuple]
                 different_fields = []
-                for header, raw_value in raw_row.iteritems():
+                for header, raw_value in raw_row.items():
                     sheet_val = wks_row.db.get(header, "")
                     if not google_equivalent(raw_value, sheet_val):
                         logger.debug("Identified different field '%s' on %s: %s != %s", header, key_tuple, sheet_val, raw_value)
@@ -974,7 +974,7 @@ class Sheet(object):
                                                     wks_row.row_num, key_tuple)
                     if row_change_callback:
                         row_change_callback(key_tuple, wks_row.db, 
-                                            None, wks_row.db.keys())
+                                            None, list(wks_row.db.keys()))
                     self._log_change(key_tuple, "Deleted entry.")
                     self._delete_row(key_tuple, wks_row)
                     results.deleted += 1
@@ -991,14 +991,14 @@ class Sheet(object):
 
             iter_empty_rows = self._yield_rows(empty_cells_list)
             while missing_raw_keys:
-                wks_row = iter_empty_rows.next()
+                wks_row = next(iter_empty_rows)
                 key_tuple = missing_raw_keys.pop()
                 logger.debug("Adding new row: %s", str(key_tuple))
                 raw_row = fixed_data[key_tuple]
                 results.added += 1
                 if row_change_callback:
                     row_change_callback(key_tuple, None, 
-                                        raw_row, raw_row.keys())
+                                        raw_row, list(raw_row.keys()))
                 self._insert_row(key_tuple, wks_row, raw_row)
 
         self._flush_writes()
@@ -1049,7 +1049,7 @@ class Sheet(object):
             return ""
 
         if header in self.key_column_headers:
-            key_dict = dict(zip(self.key_column_headers, key_tuple))
+            key_dict = dict(list(zip(self.key_column_headers, key_tuple)))
             key_val = key_dict[header]
             if key_val.isdigit() and not key_val.startswith('0'):
                 # Do not prefix integers so that the key column can be sorted 
