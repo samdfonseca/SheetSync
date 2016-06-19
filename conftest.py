@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig()
 
 CREDENTIAL_CACHE_FILE = 'credentials.json'
-CREDENTIAL_CACHE = os.getenv('CREDENTIAL_CACHE')
 CLIENT_ID = os.environ['SHEETSYNC_CLIENT_ID']  
 CLIENT_SECRET = os.environ['SHEETSYNC_CLIENT_SECRET']
 # Optional folder_key that all spreadsheets, and folders, will be created in.
@@ -26,11 +25,6 @@ SIMPSONS_KEY = "1-mOUNbmknEuKPs9HVfGu3i6Q_3JZdpUk_WeUhKoLAqI"
 
 @pytest.fixture(scope='session')
 def credentials():
-    if not os.path.exists(CREDENTIAL_CACHE_FILE) or os.stat(CREDENTIAL_CACHE_FILE).st_size == 0:
-        with open(CREDENTIAL_CACHE_FILE, 'w') as f:
-            logger.debug('Writing credential cache to file: {}'.format(CREDENTIAL_CACHE_FILE))
-            logger.debug('Credential cache: {}'.format(CREDENTIAL_CACHE))
-            f.write(CREDENTIAL_CACHE)
     logger.debug('Retrieving OAuth2.0 credentials')
     creds = sheetsync.ia_credentials_helper(CLIENT_ID, CLIENT_SECRET, 
                     credentials_cache_file='credentials.json')
