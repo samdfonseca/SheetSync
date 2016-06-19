@@ -72,11 +72,11 @@ def ia_credentials_helper(client_id, client_secret,
         try:
             with open(credentials_cache_file, 'rb') as inf:
                 cache = json.load(inf)
-        except (IOError, ValueError) as e:
+        except (FileNotFoundError, IOError, ValueError) as e:
             pass
         cache[key] = credentials.to_json()
         with open(credentials_cache_file, 'wb') as ouf:
-            json.dumps(str(cache), ouf)
+            json.dump(cache, ouf)
 
     credentials_key = "%s/%s/%s" % (client_id, client_secret, cache_key)
     try:
@@ -84,7 +84,8 @@ def ia_credentials_helper(client_id, client_secret,
         if credentials.access_token_expired:
             http = httplib2.Http()
             credentials.refresh(http)
-    except (IOError, 
+    except (FileNotFoundError,
+            IOError, 
             ValueError, 
             KeyError, 
             AccessTokenRefreshError) as e:
