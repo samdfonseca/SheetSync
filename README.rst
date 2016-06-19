@@ -3,18 +3,20 @@ SheetSync
 
 |Build Status|
 
+A python3 compatible fork of `mbrenig/SheetSync <https://github.com/mbrenig/SheetSync>`_.
+
 A python library to create, update and delete rows of data in a google spreadsheet. `Click here to read the full documentation <http://sheetsync.readthedocs.org/>`_.
 
 Installation
 ------------
 Install from PyPi using `pip <http://www.pip-installer.org/en/latest/>`_::
 
-  pip install sheetsync
+  pip install sheetsync3
 
 Or you can clone the git repo and install from the code::
 
-  git clone git@github.com:mbrenig/sheetsync.git LocalSheetSync
-  pip install LocalSheetSync
+  git clone git@github.com:samdfonseca/sheetsync.git sheetsync3
+  pip install sheetsync3
 
 Note, you may need to run the commands above with ``sudo``.
 
@@ -62,7 +64,7 @@ worksheet in a google spreadsheet doc use this code:
    # Find or create a spreadsheet, then inject data.
    target = Sheet(credentials=creds, document_name="sheetsync Getting Started")
    target.inject(data)
-   print "Spreadsheet created here: %s" % target.document_href
+   print("Spreadsheet created here: {}".format(target.document_href))
 
 The first part of this script imports the ``Sheet`` object and
 ``ia_credentials_helper`` function. This function is included to help you quickly
