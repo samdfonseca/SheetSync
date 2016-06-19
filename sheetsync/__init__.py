@@ -75,7 +75,7 @@ def ia_credentials_helper(client_id, client_secret,
         except (FileNotFoundError, IOError, ValueError) as e:
             pass
         cache[key] = credentials.to_json()
-        with open(credentials_cache_file, 'wb') as ouf:
+        with open(credentials_cache_file, 'w') as ouf:
             json.dump(cache, ouf)
 
     credentials_key = "%s/%s/%s" % (client_id, client_secret, cache_key)
