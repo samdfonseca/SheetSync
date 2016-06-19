@@ -8,7 +8,7 @@ install:
 script:
 - py.test -vv tests 
 before_install:
-- export CREDENTIAL_CACHE=$(openssl aes-255-cbc -K $encrypted_5831a9c6689d_key -iv $encrypted_5831a9c6689d_iv -in credentials.json.enc -out credentials.json -d)
+- openssl aes-255-cbc -K $encrypted_5831a9c6689d_key -iv $encrypted_5831a9c6689d_iv -in credentials.json.enc -out credentials.json -d
 env:
   global:
   - secure: YM+SqmDdZ4UjLaZ6dS6ZZIVdgHNT9ppFIVhTre0fddCCNCoptbwRNUGAnKET8Xejchzw+B3TXcDqHozw7inJY9iCg3qXWsXvXUa/qPBvstZDkxwijaA2DSnGEhuAEfjejMXNwwouZfsf9j1owretLwoPOrsBbfZUNQjWNkSSe9pqK24nLwzqbJFi5JHK1MXdillzp3Mf506N+peqj0J/A/o9BGhhSe1rEf50xpod8mnRRkN4VqgvK/5jdGbDQsCQxHpBw4g/0elXnBvLoj95A/y56ueF6o4D02G03Nrj02GSRRCNOAnJkyJ7wQaDD34zJyb+WhE1wiF//XIGB7vZur5adoHYVGK+0aZ7feIs6VVbXWfOPN0o8zKSxRf4gfE+6OW7drOOSzaKlAGbf8jGI9RNO3liXB8sIf4cUya3OMIRz2BeXRhsUWtrPhKJN/UhdfaiqTv+eZJzLiL/UhZnICM5n2RCDfTDvodXybf8M9/GNuypn+wsbNYCW2jf6b6DjXeUCa034dnK3NIAlY0ZFEw8RrebsOKBOM58aH3C8Dfd3ijvbJTJpaAT8BibHpBQxSDCzOEhcnzlzpiL7/6qij5MyeBjIv/oIAdo8JHcOa18tK0EICJTXiSD8uXpTkdEMJcE6MgvQ4DZtCS9hDA0D8vTMp+G0Y6LWuJsQkUOR/s=
