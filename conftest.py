@@ -7,7 +7,6 @@ import logging
 import sheetsync
 
 import pytest
-from boltons.fileutils import atomic_save
 
 
 # TODO: Use this: http://stackoverflow.com/questions/22574109/running-tests-with-api-authentication-in-travis-ci-without-exposing-api-password
